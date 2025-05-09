@@ -1,6 +1,7 @@
 // Wait for the DOM to load
 import { drawGrid } from './modules/grid.js';
 import { addCardToCanvas, handleCardDragging, handleCardDeletion } from './modules/cardManager.js';
+import { saveBoardState, loadBoardState } from './modules/boardState.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     const canvas = document.getElementById("canvas");
@@ -21,39 +22,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Disable default browser behaviors
     canvas.addEventListener("wheel", (e) => e.preventDefault());
     canvas.addEventListener("mousedown", (e) => e.preventDefault());
-
-    // Save the board state to localStorage
-    function saveBoardState() {
-        const state = cards.map((card) => ({
-            imageUrl: card.img.src,
-            x: card.x,
-            y: card.y,
-            width: card.width,
-            height: card.height,
-        }));
-        localStorage.setItem("boardState", JSON.stringify(state));
-    }
-
-    // Load the board state from localStorage
-    function loadBoardState() {
-        const state = JSON.parse(localStorage.getItem("boardState"));
-        if (state) {
-            state.forEach((cardData) => {
-                const img = new Image();
-                img.src = cardData.imageUrl;
-                img.onload = () => {
-                    cards.push({
-                        img,
-                        x: cardData.x,
-                        y: cardData.y,
-                        width: cardData.width,
-                        height: cardData.height,
-                    });
-                    drawCanvas();
-                };
-            });
-        }
-    }
 
     // Draw the canvas
     function drawCanvas() {
@@ -225,12 +193,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // Clear the board
     clearBoardButton.addEventListener("click", () => {
         cards.length = 0; // Clear the cards array
-        saveBoardState(); // Save the empty state
+        saveBoardState(cards); // Save the empty state
         drawCanvas(); // Redraw the canvas
     });
 
     // Load the board state when the page loads
-    loadBoardState();
+    loadBoardState(drawCanvas, cards);
 
     drawCanvas();
 

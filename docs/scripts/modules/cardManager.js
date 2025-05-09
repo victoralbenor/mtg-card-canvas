@@ -26,7 +26,7 @@ export async function addCardToCanvas(cardName, canvas, cards, drawCanvas, saveB
             height: 140,
         });
         drawCanvas();
-        saveBoardState(); // Save the state after adding a card
+        saveBoardState(cards); // Save the state after adding a card
     };
 }
 
@@ -73,7 +73,7 @@ export function handleCardDragging(event, canvas, cards, ctx, scale, offsetX, of
             draggedCard.x = mouseX - draggedCard.offsetX;
             draggedCard.y = mouseY - draggedCard.offsetY;
             drawCanvas();
-            saveBoardState(); // Save the state after moving a card
+            saveBoardState(cards); // Save the state after moving a card
         } else if (isPanning) {
             offsetX += moveEvent.clientX - startX;
             offsetY += moveEvent.clientY - startY;
@@ -128,7 +128,7 @@ export function handleCardDeletion(event, canvas, cards, saveBoardState, drawCan
 
             menu.addEventListener("click", () => {
                 cards.splice(i, 1);
-                saveBoardState();
+                saveBoardState(cards);
                 drawCanvas();
                 document.body.removeChild(menu);
             });
