@@ -1,5 +1,6 @@
 // Wait for the DOM to load
 import { drawGrid } from './grid.js';
+import { addCardToCanvas, handleCardDragging, handleCardDeletion } from './cardManager.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     const canvas = document.getElementById("canvas");
@@ -13,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let isPanning = false;
     let startX, startY;
     const cards = [];
-    let draggedCard = null;
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -21,19 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Disable default browser behaviors
     canvas.addEventListener("wheel", (e) => e.preventDefault());
     canvas.addEventListener("mousedown", (e) => e.preventDefault());
-
-    // Fetch card data from the Scryfall API
-    async function fetchCardImage(cardName) {
-        try {
-            const response = await fetch(`https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(cardName)}`);
-            if (!response.ok) throw new Error("Card not found");
-            const data = await response.json();
-            return data.image_uris.normal; // Return the card image URL
-        } catch (error) {
-            alert("Card not found. Please try again.");
-            return null;
-        }
-    }
 
     // Save the board state to localStorage
     function saveBoardState() {
@@ -68,26 +55,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Add a card to the canvas
-    async function addCardToCanvas(cardName) {
-        const imageUrl = await fetchCardImage(cardName);
-        if (!imageUrl) return;
-
-        const img = new Image();
-        img.src = imageUrl;
-        img.onload = () => {
-            cards.push({
-                img,
-                x: canvas.width / 2 - 50,
-                y: canvas.height / 2 - 70,
-                width: 100,
-                height: 140,
-            });
-            drawCanvas();
-            saveBoardState(); // Save the state after adding a card
-        };
-    }
-
     // Draw the canvas
     function drawCanvas() {
         ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
@@ -105,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (event.key === "Enter") {
             const cardName = input.value.trim();
             if (cardName) {
-                addCardToCanvas(cardName);
+                addCardToCanvas(cardName, canvas, cards, drawCanvas, saveBoardState);
                 input.value = ""; // Clear the input
             }
         }
@@ -131,79 +98,9 @@ document.addEventListener("DOMContentLoaded", () => {
         drawCanvas();
     });
 
-    // Handle card dragging
-    canvas.addEventListener("mousedown", (event) => {
-        if (event.button === 0) { // Left mouse button
-            const mouseX = (event.offsetX - offsetX) / scale;
-            const mouseY = (event.offsetY - offsetY) / scale;
-
-            // Find the topmost card under the mouse
-            for (let i = cards.length - 1; i >= 0; i--) {
-                const card = cards[i];
-                if (
-                    mouseX >= card.x &&
-                    mouseX <= card.x + card.width &&
-                    mouseY >= card.y &&
-                    mouseY <= card.y + card.height
-                ) {
-                    draggedCard = card;
-
-                    // Bring the dragged card to the front
-                    cards.splice(i, 1);
-                    cards.push(draggedCard);
-
-                    draggedCard.offsetX = mouseX - draggedCard.x;
-                    draggedCard.offsetY = mouseY - draggedCard.y;
-                    canvas.style.cursor = "grabbing";
-                    drawCanvas();
-                    break;
-                }
-            }
-        } else if (event.button === 1) { // Middle mouse button
-            isPanning = true;
-            startX = event.clientX;
-            startY = event.clientY;
-            canvas.style.cursor = "grabbing";
-        }
-    });
-
-    canvas.addEventListener("mousemove", (event) => {
-        const mouseX = (event.offsetX - offsetX) / scale;
-        const mouseY = (event.offsetY - offsetY) / scale;
-
-        if (draggedCard) {
-            draggedCard.x = mouseX - draggedCard.offsetX;
-            draggedCard.y = mouseY - draggedCard.offsetY;
-            drawCanvas();
-            saveBoardState(); // Save the state after moving a card
-        } else if (isPanning) {
-            offsetX += event.clientX - startX;
-            offsetY += event.clientY - startY;
-            startX = event.clientX;
-            startY = event.clientY;
-            drawCanvas();
-        }
-    });
-
-    canvas.addEventListener("mouseup", () => {
-        if (draggedCard) {
-            draggedCard = null;
-            canvas.style.cursor = "default";
-        } else if (isPanning) {
-            isPanning = false;
-            canvas.style.cursor = "grab";
-        }
-    });
-
-    canvas.addEventListener("mouseleave", () => {
-        if (draggedCard) {
-            draggedCard = null;
-            canvas.style.cursor = "default";
-        } else if (isPanning) {
-            isPanning = false;
-            canvas.style.cursor = "grab";
-        }
-    });
+    // Update event listeners for dragging and deleting cards
+    canvas.addEventListener("mousedown", (event) => handleCardDragging(event, canvas, cards, ctx, scale, offsetX, offsetY, drawCanvas, saveBoardState));
+    canvas.addEventListener("contextmenu", (event) => handleCardDeletion(event, canvas, cards, saveBoardState, drawCanvas, offsetX, offsetY, scale));
 
     // Resize canvas on window resize
     window.addEventListener("resize", () => {
@@ -217,51 +114,6 @@ document.addEventListener("DOMContentLoaded", () => {
         cards.length = 0; // Clear the cards array
         saveBoardState(); // Save the empty state
         drawCanvas(); // Redraw the canvas
-    });
-
-    // Prevent default context menu on canvas
-    canvas.addEventListener("contextmenu", (event) => {
-        event.preventDefault();
-
-        const mouseX = (event.offsetX - offsetX) / scale;
-        const mouseY = (event.offsetY - offsetY) / scale;
-
-        // Find the topmost card under the mouse
-        for (let i = cards.length - 1; i >= 0; i--) {
-            const card = cards[i];
-            if (
-                mouseX >= card.x &&
-                mouseX <= card.x + card.width &&
-                mouseY >= card.y &&
-                mouseY <= card.y + card.height
-            ) {
-                // Show a custom context menu
-                const menu = document.createElement("div");
-                menu.textContent = "Delete Card";
-                menu.className = "context-menu"; // Apply the new styles
-                menu.style.left = `${event.pageX}px`;
-                menu.style.top = `${event.pageY}px`;
-
-                document.body.appendChild(menu);
-
-                // Handle menu click
-                menu.addEventListener("click", () => {
-                    cards.splice(i, 1); // Remove the card
-                    saveBoardState(); // Save the updated state
-                    drawCanvas(); // Redraw the canvas
-                    document.body.removeChild(menu); // Remove the menu
-                });
-
-                // Remove the menu if clicked elsewhere
-                document.addEventListener("click", () => {
-                    if (document.body.contains(menu)) {
-                        document.body.removeChild(menu);
-                    }
-                }, { once: true });
-
-                break;
-            }
-        }
     });
 
     // Load the board state when the page loads
