@@ -67,6 +67,77 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Create suggestion box for autocomplete
+    const suggestionBox = document.createElement("div");
+    suggestionBox.id = "suggestion-box";
+    suggestionBox.style.position = "absolute";
+    suggestionBox.style.backgroundColor = "#fff";
+    suggestionBox.style.border = "1px solid #ccc";
+    suggestionBox.style.borderRadius = "5px";
+    suggestionBox.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.2)";
+    suggestionBox.style.zIndex = "1000";
+    suggestionBox.style.display = "none";
+    document.body.appendChild(suggestionBox);
+
+    // Fetch autocomplete suggestions from Scryfall API
+    async function fetchAutocompleteSuggestions(query) {
+        try {
+            const response = await fetch(`https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(query)}`);
+            if (!response.ok) throw new Error("Failed to fetch suggestions");
+            const data = await response.json();
+            return data.data; // Return the list of suggestions
+        } catch (error) {
+            console.error("Error fetching autocomplete suggestions:", error);
+            return [];
+        }
+    }
+
+    // Show suggestions in the dropdown
+    function showSuggestions(suggestions, inputElement) {
+        suggestionBox.innerHTML = ""; // Clear previous suggestions
+        if (suggestions.length === 0) {
+            suggestionBox.style.display = "none";
+            return;
+        }
+
+        suggestions.forEach((suggestion) => {
+            const suggestionItem = document.createElement("div");
+            suggestionItem.textContent = suggestion;
+            suggestionItem.style.padding = "10px";
+            suggestionItem.style.cursor = "pointer";
+            suggestionItem.addEventListener("click", () => {
+                addCardToCanvas(suggestion, canvas, cards, drawCanvas, saveBoardState); // Create the card directly
+                inputElement.value = ""; // Clear the input field
+                suggestionBox.style.display = "none"; // Hide the suggestion box
+            });
+            suggestionBox.appendChild(suggestionItem);
+        });
+
+        const rect = inputElement.getBoundingClientRect();
+        suggestionBox.style.left = `${rect.left}px`;
+        suggestionBox.style.top = `${rect.bottom + window.scrollY}px`;
+        suggestionBox.style.width = `${rect.width}px`;
+        suggestionBox.style.display = "block";
+    }
+
+    // Hide suggestions when clicking outside
+    document.addEventListener("click", (event) => {
+        if (!suggestionBox.contains(event.target) && event.target !== input) {
+            suggestionBox.style.display = "none";
+        }
+    });
+
+    // Handle input field typing for autocomplete
+    input.addEventListener("input", async () => {
+        const query = input.value.trim();
+        if (query.length > 1) { // Fetch suggestions only for queries longer than 1 character
+            const suggestions = await fetchAutocompleteSuggestions(query);
+            showSuggestions(suggestions, input);
+        } else {
+            suggestionBox.style.display = "none";
+        }
+    });
+
     // Handle card input submission
     input.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
@@ -75,6 +146,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 addCardToCanvas(cardName, canvas, cards, drawCanvas, saveBoardState);
                 input.value = ""; // Clear the input
             }
+        }
+    });
+
+    // Handle "Add Card" button click
+    document.getElementById("add-card").addEventListener("click", () => {
+        const cardName = input.value.trim();
+        if (cardName) {
+            addCardToCanvas(cardName, canvas, cards, drawCanvas, saveBoardState);
+            input.value = ""; // Clear the input
         }
     });
 
@@ -99,7 +179,40 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Update event listeners for dragging and deleting cards
-    canvas.addEventListener("mousedown", (event) => handleCardDragging(event, canvas, cards, ctx, scale, offsetX, offsetY, drawCanvas, saveBoardState));
+    canvas.addEventListener("mousedown", (event) => {
+        if (event.button === 1) { // Middle mouse button
+            isPanning = true;
+            startX = event.clientX;
+            startY = event.clientY;
+            canvas.style.cursor = "grabbing";
+        }
+        handleCardDragging(event, canvas, cards, ctx, scale, offsetX, offsetY, drawCanvas, saveBoardState);
+    });
+
+    canvas.addEventListener("mousemove", (event) => {
+        if (isPanning) {
+            offsetX += event.clientX - startX;
+            offsetY += event.clientY - startY;
+            startX = event.clientX;
+            startY = event.clientY;
+            drawCanvas();
+        }
+    });
+
+    canvas.addEventListener("mouseup", (event) => {
+        if (isPanning && event.button === 1) { // Middle mouse button
+            isPanning = false;
+            canvas.style.cursor = "default";
+        }
+    });
+
+    canvas.addEventListener("mouseleave", () => {
+        if (isPanning) {
+            isPanning = false;
+            canvas.style.cursor = "default";
+        }
+    });
+
     canvas.addEventListener("contextmenu", (event) => handleCardDeletion(event, canvas, cards, saveBoardState, drawCanvas, offsetX, offsetY, scale));
 
     // Resize canvas on window resize
@@ -120,4 +233,49 @@ document.addEventListener("DOMContentLoaded", () => {
     loadBoardState();
 
     drawCanvas();
+
+    // Bulk Import functionality
+    const bulkImportModal = document.getElementById("bulk-import-modal");
+    const bulkImportInput = document.getElementById("bulk-import-input");
+    const bulkImportConfirm = document.getElementById("bulk-import-confirm");
+    const bulkImportCancel = document.getElementById("bulk-import-cancel");
+
+    // Open Bulk Import modal
+    document.getElementById("open-bulk-import").addEventListener("click", () => {
+        bulkImportModal.style.display = "flex"; // Show the modal
+    });
+
+    // Close Bulk Import modal
+    bulkImportCancel.addEventListener("click", () => {
+        bulkImportModal.style.display = "none"; // Hide the modal
+        bulkImportInput.value = ""; // Clear the input
+    });
+
+    // Confirm Bulk Import
+    bulkImportConfirm.addEventListener("click", async () => {
+        const cardNames = bulkImportInput.value.trim().split("\n").map(name => name.trim()).filter(name => name);
+        if (cardNames.length === 0) return;
+
+        const gridSize = Math.ceil(Math.sqrt(cardNames.length)); // Determine grid size
+        const cardWidth = 100;
+        const cardHeight = 140;
+        const spacing = 20;
+
+        let x = canvas.width / 2 - (gridSize * (cardWidth + spacing)) / 2;
+        let y = canvas.height / 2 - (gridSize * (cardHeight + spacing)) / 2;
+
+        for (let i = 0; i < cardNames.length; i++) {
+            const cardName = cardNames[i];
+            await addCardToCanvas(cardName, canvas, cards, drawCanvas, saveBoardState, x, y);
+
+            x += cardWidth + spacing;
+            if ((i + 1) % gridSize === 0) {
+                x = canvas.width / 2 - (gridSize * (cardWidth + spacing)) / 2;
+                y += cardHeight + spacing;
+            }
+        }
+
+        bulkImportModal.style.display = "none"; // Hide the modal
+        bulkImportInput.value = ""; // Clear the input
+    });
 });

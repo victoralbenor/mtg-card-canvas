@@ -11,7 +11,7 @@ async function fetchCardImage(cardName) {
     }
 }
 
-export async function addCardToCanvas(cardName, canvas, cards, drawCanvas, saveBoardState) {
+export async function addCardToCanvas(cardName, canvas, cards, drawCanvas, saveBoardState, x = null, y = null) {
     const imageUrl = await fetchCardImage(cardName);
     if (!imageUrl) return;
 
@@ -20,8 +20,8 @@ export async function addCardToCanvas(cardName, canvas, cards, drawCanvas, saveB
     img.onload = () => {
         cards.push({
             img,
-            x: canvas.width / 2 - 50,
-            y: canvas.height / 2 - 70,
+            x: x !== null ? x : canvas.width / 2 - 50,
+            y: y !== null ? y : canvas.height / 2 - 70,
             width: 100,
             height: 140,
         });
