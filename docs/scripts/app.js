@@ -1,6 +1,6 @@
 // Wait for the DOM to load
-import { drawGrid } from './grid.js';
-import { addCardToCanvas, handleCardDragging, handleCardDeletion } from './cardManager.js';
+import { drawGrid } from './modules/grid.js';
+import { addCardToCanvas, handleCardDragging, handleCardDeletion } from './modules/cardManager.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     const canvas = document.getElementById("canvas");
