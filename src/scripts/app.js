@@ -2,6 +2,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const canvas = document.getElementById("canvas");
     const input = document.getElementById("card-input");
+    const clearBoardButton = document.getElementById("clear-board");
     const ctx = canvas.getContext("2d");
 
     let scale = 1;
@@ -203,6 +204,63 @@ document.addEventListener("DOMContentLoaded", () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         drawCanvas();
+    });
+
+    // Clear the board
+    clearBoardButton.addEventListener("click", () => {
+        cards.length = 0; // Clear the cards array
+        saveBoardState(); // Save the empty state
+        drawCanvas(); // Redraw the canvas
+    });
+
+    // Prevent default context menu on canvas
+    canvas.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+
+        const mouseX = (event.offsetX - offsetX) / scale;
+        const mouseY = (event.offsetY - offsetY) / scale;
+
+        // Find the topmost card under the mouse
+        for (let i = cards.length - 1; i >= 0; i--) {
+            const card = cards[i];
+            if (
+                mouseX >= card.x &&
+                mouseX <= card.x + card.width &&
+                mouseY >= card.y &&
+                mouseY <= card.y + card.height
+            ) {
+                // Show a custom context menu
+                const menu = document.createElement("div");
+                menu.textContent = "Delete Card";
+                menu.style.position = "absolute";
+                menu.style.left = `${event.pageX}px`;
+                menu.style.top = `${event.pageY}px`;
+                menu.style.backgroundColor = "#fff";
+                menu.style.border = "1px solid #000";
+                menu.style.padding = "5px";
+                menu.style.cursor = "pointer";
+                menu.style.zIndex = "20";
+
+                document.body.appendChild(menu);
+
+                // Handle menu click
+                menu.addEventListener("click", () => {
+                    cards.splice(i, 1); // Remove the card
+                    saveBoardState(); // Save the updated state
+                    drawCanvas(); // Redraw the canvas
+                    document.body.removeChild(menu); // Remove the menu
+                });
+
+                // Remove the menu if clicked elsewhere
+                document.addEventListener("click", () => {
+                    if (document.body.contains(menu)) {
+                        document.body.removeChild(menu);
+                    }
+                }, { once: true });
+
+                break;
+            }
+        }
     });
 
     // Load the board state when the page loads

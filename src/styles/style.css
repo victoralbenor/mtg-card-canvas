@@ -29,4 +29,16 @@ input[type="text"] {
     margin-bottom: 20px;
     width: 300px;
     text-align: center;
+    margin-right: 10px; /* Add spacing for the button */
+}
+
+button {
+    position: absolute;
+    top: 10px;
+    left: calc(50% + 160px); /* Position next to the input field */
+    transform: translateX(-50%);
+    z-index: 10;
+    padding: 10px;
+    font-size: 16px;
+    cursor: pointer;
 }
