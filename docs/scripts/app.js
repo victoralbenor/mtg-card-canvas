@@ -120,6 +120,11 @@ document.addEventListener("DOMContentLoaded", () => {
     stickyNoteEditor.style.borderRadius = "5px";
     stickyNoteEditor.style.padding = "5px";
     stickyNoteEditor.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.2)";
+    stickyNoteEditor.style.backgroundColor = "#ffeb3b";
+    stickyNoteEditor.style.font = "16px Arial";
+    stickyNoteEditor.style.color = "#000";
+    stickyNoteEditor.style.textAlign = "left";
+    stickyNoteEditor.style.lineHeight = "20px";
     document.body.appendChild(stickyNoteEditor);
 
     // Show the text area for editing
