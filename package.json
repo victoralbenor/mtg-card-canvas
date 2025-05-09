@@ -2,7 +2,7 @@
   "name": "mtg-card-canvas",
   "version": "1.0.0",
   "description": "A web project that allows users to create and drag Magic: The Gathering card images on a canvas.",
-  "main": "src/scripts/app.js",
+  "main": "docs/scripts/app.js",
   "scripts": {
     "start": "live-server src"
   },
