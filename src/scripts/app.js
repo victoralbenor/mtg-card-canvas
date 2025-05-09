@@ -32,6 +32,39 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Save the board state to localStorage
+    function saveBoardState() {
+        const state = cards.map((card) => ({
+            imageUrl: card.img.src,
+            x: card.x,
+            y: card.y,
+            width: card.width,
+            height: card.height,
+        }));
+        localStorage.setItem("boardState", JSON.stringify(state));
+    }
+
+    // Load the board state from localStorage
+    function loadBoardState() {
+        const state = JSON.parse(localStorage.getItem("boardState"));
+        if (state) {
+            state.forEach((cardData) => {
+                const img = new Image();
+                img.src = cardData.imageUrl;
+                img.onload = () => {
+                    cards.push({
+                        img,
+                        x: cardData.x,
+                        y: cardData.y,
+                        width: cardData.width,
+                        height: cardData.height,
+                    });
+                    drawCanvas();
+                };
+            });
+        }
+    }
+
     // Add a card to the canvas
     async function addCardToCanvas(cardName) {
         const imageUrl = await fetchCardImage(cardName);
@@ -48,6 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 height: 140,
             });
             drawCanvas();
+            saveBoardState(); // Save the state after adding a card
         };
     }
 
@@ -134,6 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
             draggedCard.x = mouseX - draggedCard.offsetX;
             draggedCard.y = mouseY - draggedCard.offsetY;
             drawCanvas();
+            saveBoardState(); // Save the state after moving a card
         } else if (isPanning) {
             offsetX += event.clientX - startX;
             offsetY += event.clientY - startY;
@@ -169,6 +204,9 @@ document.addEventListener("DOMContentLoaded", () => {
         canvas.height = window.innerHeight;
         drawCanvas();
     });
+
+    // Load the board state when the page loads
+    loadBoardState();
 
     drawCanvas();
 });
