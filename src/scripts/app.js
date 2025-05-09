@@ -96,18 +96,27 @@ document.addEventListener("DOMContentLoaded", () => {
             const mouseX = (event.offsetX - offsetX) / scale;
             const mouseY = (event.offsetY - offsetY) / scale;
 
-            draggedCard = cards.find(
-                (card) =>
+            // Find the topmost card under the mouse
+            for (let i = cards.length - 1; i >= 0; i--) {
+                const card = cards[i];
+                if (
                     mouseX >= card.x &&
                     mouseX <= card.x + card.width &&
                     mouseY >= card.y &&
                     mouseY <= card.y + card.height
-            );
+                ) {
+                    draggedCard = card;
 
-            if (draggedCard) {
-                draggedCard.offsetX = mouseX - draggedCard.x;
-                draggedCard.offsetY = mouseY - draggedCard.y;
-                canvas.style.cursor = "grabbing";
+                    // Bring the dragged card to the front
+                    cards.splice(i, 1);
+                    cards.push(draggedCard);
+
+                    draggedCard.offsetX = mouseX - draggedCard.x;
+                    draggedCard.offsetY = mouseY - draggedCard.y;
+                    canvas.style.cursor = "grabbing";
+                    drawCanvas();
+                    break;
+                }
             }
         } else if (event.button === 1) { // Middle mouse button
             isPanning = true;
