@@ -267,7 +267,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Handle dragging and resizing sticky notes
+    let isDraggingNote = false;
+    let draggedNote = null;
+
     canvas.addEventListener("mousedown", (event) => {
         const mouseX = (event.offsetX - offsetX) / scale;
         const mouseY = (event.offsetY - offsetY) / scale;
@@ -286,40 +288,50 @@ document.addEventListener("DOMContentLoaded", () => {
                 note.selected = true;
                 note.offsetX = mouseX - note.x;
                 note.offsetY = mouseY - note.y;
+                isDraggingNote = true;
+                draggedNote = note;
             } else {
                 note.selected = false;
             }
         });
     });
 
-    canvas.addEventListener("mousemove", (event) => {
-        const mouseX = (event.offsetX - offsetX) / scale;
-        const mouseY = (event.offsetY - offsetY) / scale;
+    let lastRenderTime = 0;
 
-        let isOnEdge = false;
+    function smoothDrag(timestamp) {
+        if (isDraggingNote && draggedNote) {
+            const mouseX = (lastMouseEvent.offsetX - offsetX) / scale;
+            const mouseY = (lastMouseEvent.offsetY - offsetY) / scale;
 
-        stickyNotes.forEach(note => {
-            if (note.isDragging) {
-                note.x = mouseX - note.offsetX;
-                note.y = mouseY - note.offsetY;
-                drawCanvas();
-            } else if (note.isResizing) {
-                note.width = mouseX - note.x;
-                note.height = mouseY - note.y;
-                drawCanvas();
-            } else {
-                const edgeCondition = mouseX >= note.x + note.width - 10 && mouseX <= note.x + note.width &&
-                                      mouseY >= note.y + note.height - 10 && mouseY <= note.y + note.height;
-                if (edgeCondition) {
-                    isOnEdge = true;
-                }
+            if (draggedNote.isDragging) {
+                draggedNote.x = mouseX - draggedNote.offsetX;
+                draggedNote.y = mouseY - draggedNote.offsetY;
+            } else if (draggedNote.isResizing) {
+                draggedNote.width = mouseX - draggedNote.x;
+                draggedNote.height = mouseY - draggedNote.y;
             }
-        });
 
-        canvas.style.cursor = isOnEdge ? "nwse-resize" : "default";
+            if (timestamp - lastRenderTime > 16) { // ~60 FPS
+                drawCanvas();
+                lastRenderTime = timestamp;
+            }
+
+            requestAnimationFrame(smoothDrag);
+        }
+    }
+
+    let lastMouseEvent = null;
+
+    canvas.addEventListener("mousemove", (event) => {
+        lastMouseEvent = event;
+        if (isDraggingNote) {
+            requestAnimationFrame(smoothDrag);
+        }
     });
 
     canvas.addEventListener("mouseup", () => {
+        isDraggingNote = false;
+        draggedNote = null;
         stickyNotes.forEach(note => {
             note.isDragging = false;
             note.isResizing = false;
