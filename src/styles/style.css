@@ -6,15 +6,24 @@ body {
     justify-content: center;
     height: 100vh;
     background-color: #f0f0f0;
+    overflow: hidden; /* Prevent scrollbars for infinite canvas */
+    position: relative; /* Allow positioning of child elements */
 }
 
 canvas {
-    border: 1px solid #000;
+    width: 100vw;
+    height: 100vh;
+    display: block;
     background-color: #fff;
-    cursor: grab;
+    cursor: default; /* Default cursor for canvas */
 }
 
 input[type="text"] {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10; /* Ensure it stays above the canvas */
     padding: 10px;
     font-size: 16px;
     margin-bottom: 20px;
