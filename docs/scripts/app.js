@@ -296,6 +296,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const mouseX = (event.offsetX - offsetX) / scale;
         const mouseY = (event.offsetY - offsetY) / scale;
 
+        let isOnEdge = false;
+
         stickyNotes.forEach(note => {
             if (note.isDragging) {
                 note.x = mouseX - note.offsetX;
@@ -305,8 +307,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 note.width = mouseX - note.x;
                 note.height = mouseY - note.y;
                 drawCanvas();
+            } else {
+                const edgeCondition = mouseX >= note.x + note.width - 10 && mouseX <= note.x + note.width &&
+                                      mouseY >= note.y + note.height - 10 && mouseY <= note.y + note.height;
+                if (edgeCondition) {
+                    isOnEdge = true;
+                }
             }
         });
+
+        canvas.style.cursor = isOnEdge ? "nwse-resize" : "default";
     });
 
     canvas.addEventListener("mouseup", () => {
