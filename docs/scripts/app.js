@@ -179,7 +179,40 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Update event listeners for dragging and deleting cards
-    canvas.addEventListener("mousedown", (event) => handleCardDragging(event, canvas, cards, ctx, scale, offsetX, offsetY, drawCanvas, saveBoardState));
+    canvas.addEventListener("mousedown", (event) => {
+        if (event.button === 1) { // Middle mouse button
+            isPanning = true;
+            startX = event.clientX;
+            startY = event.clientY;
+            canvas.style.cursor = "grabbing";
+        }
+        handleCardDragging(event, canvas, cards, ctx, scale, offsetX, offsetY, drawCanvas, saveBoardState);
+    });
+
+    canvas.addEventListener("mousemove", (event) => {
+        if (isPanning) {
+            offsetX += event.clientX - startX;
+            offsetY += event.clientY - startY;
+            startX = event.clientX;
+            startY = event.clientY;
+            drawCanvas();
+        }
+    });
+
+    canvas.addEventListener("mouseup", (event) => {
+        if (isPanning && event.button === 1) { // Middle mouse button
+            isPanning = false;
+            canvas.style.cursor = "default";
+        }
+    });
+
+    canvas.addEventListener("mouseleave", () => {
+        if (isPanning) {
+            isPanning = false;
+            canvas.style.cursor = "default";
+        }
+    });
+
     canvas.addEventListener("contextmenu", (event) => handleCardDeletion(event, canvas, cards, saveBoardState, drawCanvas, offsetX, offsetY, scale));
 
     // Resize canvas on window resize
