@@ -232,14 +232,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Show a custom context menu
                 const menu = document.createElement("div");
                 menu.textContent = "Delete Card";
-                menu.style.position = "absolute";
+                menu.className = "context-menu"; // Apply the new styles
                 menu.style.left = `${event.pageX}px`;
                 menu.style.top = `${event.pageY}px`;
-                menu.style.backgroundColor = "#fff";
-                menu.style.border = "1px solid #000";
-                menu.style.padding = "5px";
-                menu.style.cursor = "pointer";
-                menu.style.zIndex = "20";
 
                 document.body.appendChild(menu);
 

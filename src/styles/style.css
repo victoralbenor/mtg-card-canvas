@@ -18,27 +18,64 @@ canvas {
     cursor: default; /* Default cursor for canvas */
 }
 
-input[type="text"] {
-    position: absolute;
+.menu-hud {
+    position: fixed;
     top: 10px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 10; /* Ensure it stays above the canvas */
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Add spacing between elements */
+    z-index: 10;
+    background-color: rgba(255, 255, 255, 0.9); /* Slightly transparent background */
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Add shadow for depth */
+}
+
+input[type="text"] {
     padding: 10px;
     font-size: 16px;
-    margin-bottom: 20px;
     width: 300px;
     text-align: center;
-    margin-right: 10px; /* Add spacing for the button */
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }
 
 button {
-    position: absolute;
-    top: 10px;
-    left: calc(50% + 160px); /* Position next to the input field */
-    transform: translateX(-50%);
-    z-index: 10;
-    padding: 10px;
+    padding: 10px 15px;
     font-size: 16px;
     cursor: pointer;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+button:active {
+    background-color: #003f7f;
+}
+
+.context-menu {
+    position: absolute;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    font-size: 16px; /* Adjust font size for better readability */
+    font-family: Arial, sans-serif; /* Use a clean, modern font */
+    color: #333;
+    cursor: pointer;
+    z-index: 20;
+    transition: background-color 0.2s ease; /* Smooth hover effect */
+}
+
+.context-menu:hover {
+    background-color: #e6e6e6; /* Light gray on hover */
 }
