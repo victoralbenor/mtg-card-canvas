@@ -106,7 +106,8 @@ document.addEventListener("DOMContentLoaded", () => {
             suggestionItem.style.padding = "10px";
             suggestionItem.style.cursor = "pointer";
             suggestionItem.addEventListener("click", () => {
-                inputElement.value = suggestion; // Set the input value to the selected suggestion
+                addCardToCanvas(suggestion, canvas, cards, drawCanvas, saveBoardState); // Create the card directly
+                inputElement.value = ""; // Clear the input field
                 suggestionBox.style.display = "none"; // Hide the suggestion box
             });
             suggestionBox.appendChild(suggestionItem);
