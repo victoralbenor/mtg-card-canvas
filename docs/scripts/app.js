@@ -233,4 +233,49 @@ document.addEventListener("DOMContentLoaded", () => {
     loadBoardState();
 
     drawCanvas();
+
+    // Bulk Import functionality
+    const bulkImportModal = document.getElementById("bulk-import-modal");
+    const bulkImportInput = document.getElementById("bulk-import-input");
+    const bulkImportConfirm = document.getElementById("bulk-import-confirm");
+    const bulkImportCancel = document.getElementById("bulk-import-cancel");
+
+    // Open Bulk Import modal
+    document.getElementById("open-bulk-import").addEventListener("click", () => {
+        bulkImportModal.style.display = "flex"; // Show the modal
+    });
+
+    // Close Bulk Import modal
+    bulkImportCancel.addEventListener("click", () => {
+        bulkImportModal.style.display = "none"; // Hide the modal
+        bulkImportInput.value = ""; // Clear the input
+    });
+
+    // Confirm Bulk Import
+    bulkImportConfirm.addEventListener("click", async () => {
+        const cardNames = bulkImportInput.value.trim().split("\n").map(name => name.trim()).filter(name => name);
+        if (cardNames.length === 0) return;
+
+        const gridSize = Math.ceil(Math.sqrt(cardNames.length)); // Determine grid size
+        const cardWidth = 100;
+        const cardHeight = 140;
+        const spacing = 20;
+
+        let x = canvas.width / 2 - (gridSize * (cardWidth + spacing)) / 2;
+        let y = canvas.height / 2 - (gridSize * (cardHeight + spacing)) / 2;
+
+        for (let i = 0; i < cardNames.length; i++) {
+            const cardName = cardNames[i];
+            await addCardToCanvas(cardName, canvas, cards, drawCanvas, saveBoardState, x, y);
+
+            x += cardWidth + spacing;
+            if ((i + 1) % gridSize === 0) {
+                x = canvas.width / 2 - (gridSize * (cardWidth + spacing)) / 2;
+                y += cardHeight + spacing;
+            }
+        }
+
+        bulkImportModal.style.display = "none"; // Hide the modal
+        bulkImportInput.value = ""; // Clear the input
+    });
 });

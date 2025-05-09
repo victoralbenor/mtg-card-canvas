@@ -9,10 +9,21 @@
 <body>
     <div id="container">
         <div class="menu-hud">
+            <button id="open-bulk-import">Open Bulk Import</button> <!-- New button -->
             <input type="text" id="card-input" placeholder="Enter card name and press Enter">
             <button id="add-card">Add Card</button>
             <button id="clear-board">Clear Board</button>
         </div>
+
+        <!-- Bulk Import Modal -->
+        <div id="bulk-import-modal" class="modal">
+            <div class="modal-content">
+                <textarea id="bulk-import-input" placeholder="Paste card names here, one per line"></textarea>
+                <button id="bulk-import-confirm">Confirm</button>
+                <button id="bulk-import-cancel">Cancel</button>
+            </div>
+        </div>
+
         <canvas id="canvas"></canvas>
     </div>
     <script type="module" src="./scripts/app.js"></script>
