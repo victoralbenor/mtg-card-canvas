@@ -78,6 +78,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // Handle "Add Card" button click
+    document.getElementById("add-card").addEventListener("click", () => {
+        const cardName = input.value.trim();
+        if (cardName) {
+            addCardToCanvas(cardName, canvas, cards, drawCanvas, saveBoardState);
+            input.value = ""; // Clear the input
+        }
+    });
+
     // Zoom in and out with the mouse wheel
     canvas.addEventListener("wheel", (event) => {
         const zoomFactor = 1.1;

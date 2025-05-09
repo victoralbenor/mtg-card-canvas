@@ -61,6 +61,18 @@ button:active {
     background-color: #003f7f;
 }
 
+button#clear-board {
+    background-color: #dc3545; /* Red background */
+}
+
+button#clear-board:hover {
+    background-color: #a71d2a; /* Darker red on hover */
+}
+
+button#clear-board:active {
+    background-color: #7a101f; /* Even darker red on active */
+}
+
 .context-menu {
     position: absolute;
     background-color: #fff;
