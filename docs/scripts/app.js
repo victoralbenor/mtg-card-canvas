@@ -67,6 +67,76 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Create suggestion box for autocomplete
+    const suggestionBox = document.createElement("div");
+    suggestionBox.id = "suggestion-box";
+    suggestionBox.style.position = "absolute";
+    suggestionBox.style.backgroundColor = "#fff";
+    suggestionBox.style.border = "1px solid #ccc";
+    suggestionBox.style.borderRadius = "5px";
+    suggestionBox.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.2)";
+    suggestionBox.style.zIndex = "1000";
+    suggestionBox.style.display = "none";
+    document.body.appendChild(suggestionBox);
+
+    // Fetch autocomplete suggestions from Scryfall API
+    async function fetchAutocompleteSuggestions(query) {
+        try {
+            const response = await fetch(`https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(query)}`);
+            if (!response.ok) throw new Error("Failed to fetch suggestions");
+            const data = await response.json();
+            return data.data; // Return the list of suggestions
+        } catch (error) {
+            console.error("Error fetching autocomplete suggestions:", error);
+            return [];
+        }
+    }
+
+    // Show suggestions in the dropdown
+    function showSuggestions(suggestions, inputElement) {
+        suggestionBox.innerHTML = ""; // Clear previous suggestions
+        if (suggestions.length === 0) {
+            suggestionBox.style.display = "none";
+            return;
+        }
+
+        suggestions.forEach((suggestion) => {
+            const suggestionItem = document.createElement("div");
+            suggestionItem.textContent = suggestion;
+            suggestionItem.style.padding = "10px";
+            suggestionItem.style.cursor = "pointer";
+            suggestionItem.addEventListener("click", () => {
+                inputElement.value = suggestion; // Set the input value to the selected suggestion
+                suggestionBox.style.display = "none"; // Hide the suggestion box
+            });
+            suggestionBox.appendChild(suggestionItem);
+        });
+
+        const rect = inputElement.getBoundingClientRect();
+        suggestionBox.style.left = `${rect.left}px`;
+        suggestionBox.style.top = `${rect.bottom + window.scrollY}px`;
+        suggestionBox.style.width = `${rect.width}px`;
+        suggestionBox.style.display = "block";
+    }
+
+    // Hide suggestions when clicking outside
+    document.addEventListener("click", (event) => {
+        if (!suggestionBox.contains(event.target) && event.target !== input) {
+            suggestionBox.style.display = "none";
+        }
+    });
+
+    // Handle input field typing for autocomplete
+    input.addEventListener("input", async () => {
+        const query = input.value.trim();
+        if (query.length > 1) { // Fetch suggestions only for queries longer than 1 character
+            const suggestions = await fetchAutocompleteSuggestions(query);
+            showSuggestions(suggestions, input);
+        } else {
+            suggestionBox.style.display = "none";
+        }
+    });
+
     // Handle card input submission
     input.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {

@@ -91,3 +91,7 @@ button#clear-board:active {
 .context-menu:hover {
     background-color: #e6e6e6; /* Light gray on hover */
 }
+
+#suggestion-box div:hover {
+    background-color: #f0f0f0; /* Light gray on hover */
+}
