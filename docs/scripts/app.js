@@ -43,8 +43,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const note = {
             x,
             y,
-            width: 150,
-            height: 150,
+            width: 100,
+            height: 80,
             text: "",
             isDragging: false,
             isResizing: false,
@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
             ctx.strokeRect(note.x, note.y, note.width, note.height);
 
             ctx.fillStyle = "#000";
-            ctx.font = "16px Arial";
+            ctx.font = "8px Arial";
             ctx.textAlign = "left";
             ctx.textBaseline = "top";
             const padding = 10;
