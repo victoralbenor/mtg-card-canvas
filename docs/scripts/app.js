@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let isPanning = false;
     let startX, startY;
     const cards = [];
+    const stickyNotes = [];
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -33,6 +34,68 @@ document.addEventListener("DOMContentLoaded", () => {
         cards.forEach((card) => {
             ctx.drawImage(card.img, card.x, card.y, card.width, card.height);
         });
+
+        drawStickyNotes(); // Draw sticky notes
+    }
+
+    // Create a sticky note
+    function createStickyNote(x, y) {
+        const note = {
+            x,
+            y,
+            width: 150,
+            height: 150,
+            text: "",
+            isDragging: false,
+            isResizing: false,
+            selected: false
+        };
+        stickyNotes.push(note);
+        drawCanvas();
+    }
+
+    // Draw sticky notes
+    function drawStickyNotes() {
+        stickyNotes.forEach(note => {
+            ctx.fillStyle = "#ffeb3b";
+            ctx.fillRect(note.x, note.y, note.width, note.height);
+            ctx.strokeStyle = "#000";
+            ctx.strokeRect(note.x, note.y, note.width, note.height);
+
+            ctx.fillStyle = "#000";
+            ctx.font = "16px Arial";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "top";
+            const padding = 10;
+            const textX = note.x + padding;
+            const textY = note.y + padding;
+            const textWidth = note.width - 2 * padding;
+            const textHeight = note.height - 2 * padding;
+            const lines = wrapText(ctx, note.text, textX, textY, textWidth, textHeight);
+            lines.forEach((line, index) => {
+                ctx.fillText(line, textX, textY + index * 20);
+            });
+        });
+    }
+
+    // Utility function to wrap text
+    function wrapText(ctx, text, x, y, maxWidth, maxHeight) {
+        const words = text.split(" ");
+        const lines = [];
+        let line = "";
+        words.forEach(word => {
+            const testLine = line + word + " ";
+            const metrics = ctx.measureText(testLine);
+            const testWidth = metrics.width;
+            if (testWidth > maxWidth && line !== "") {
+                lines.push(line);
+                line = word + " ";
+            } else {
+                line = testLine;
+            }
+        });
+        lines.push(line);
+        return lines;
     }
 
     // Create suggestion box for autocomplete
@@ -46,6 +109,38 @@ document.addEventListener("DOMContentLoaded", () => {
     suggestionBox.style.zIndex = "1000";
     suggestionBox.style.display = "none";
     document.body.appendChild(suggestionBox);
+
+    // Add a text area for editing sticky notes
+    const stickyNoteEditor = document.createElement("textarea");
+    stickyNoteEditor.style.position = "absolute";
+    stickyNoteEditor.style.zIndex = "1000";
+    stickyNoteEditor.style.display = "none";
+    stickyNoteEditor.style.resize = "none";
+    stickyNoteEditor.style.border = "1px solid #ccc";
+    stickyNoteEditor.style.borderRadius = "5px";
+    stickyNoteEditor.style.padding = "5px";
+    stickyNoteEditor.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.2)";
+    document.body.appendChild(stickyNoteEditor);
+
+    // Show the text area for editing
+    function showStickyNoteEditor(note) {
+        stickyNoteEditor.value = note.text;
+        stickyNoteEditor.style.left = `${note.x * scale + offsetX}px`;
+        stickyNoteEditor.style.top = `${note.y * scale + offsetY}px`;
+        stickyNoteEditor.style.width = `${note.width * scale}px`;
+        stickyNoteEditor.style.height = `${note.height * scale}px`;
+        stickyNoteEditor.style.display = "block";
+        stickyNoteEditor.focus();
+
+        stickyNoteEditor.oninput = () => {
+            note.text = stickyNoteEditor.value;
+            drawCanvas();
+        };
+
+        stickyNoteEditor.onblur = () => {
+            stickyNoteEditor.style.display = "none";
+        };
+    }
 
     // Fetch autocomplete suggestions from Scryfall API
     async function fetchAutocompleteSuggestions(query) {
@@ -146,6 +241,151 @@ document.addEventListener("DOMContentLoaded", () => {
         drawCanvas();
     });
 
+    // Remove sticky note creation from default left click
+    canvas.addEventListener("click", (event) => {
+        const mouseX = (event.offsetX - offsetX) / scale;
+        const mouseY = (event.offsetY - offsetY) / scale;
+
+        let clickedOnNote = false;
+        stickyNotes.forEach(note => {
+            if (
+                mouseX >= note.x && mouseX <= note.x + note.width &&
+                mouseY >= note.y && mouseY <= note.y + note.height
+            ) {
+                clickedOnNote = true;
+                showStickyNoteEditor(note);
+            }
+        });
+
+        if (!clickedOnNote) {
+            stickyNoteEditor.style.display = "none";
+        }
+    });
+
+    // Handle dragging and resizing sticky notes
+    canvas.addEventListener("mousedown", (event) => {
+        const mouseX = (event.offsetX - offsetX) / scale;
+        const mouseY = (event.offsetY - offsetY) / scale;
+
+        stickyNotes.forEach(note => {
+            const isOnEdge = mouseX >= note.x + note.width - 10 && mouseX <= note.x + note.width &&
+                             mouseY >= note.y + note.height - 10 && mouseY <= note.y + note.height;
+
+            if (isOnEdge) {
+                note.isResizing = true;
+            } else if (
+                mouseX >= note.x && mouseX <= note.x + note.width &&
+                mouseY >= note.y && mouseY <= note.y + note.height
+            ) {
+                note.isDragging = true;
+                note.selected = true;
+                note.offsetX = mouseX - note.x;
+                note.offsetY = mouseY - note.y;
+            } else {
+                note.selected = false;
+            }
+        });
+    });
+
+    canvas.addEventListener("mousemove", (event) => {
+        const mouseX = (event.offsetX - offsetX) / scale;
+        const mouseY = (event.offsetY - offsetY) / scale;
+
+        stickyNotes.forEach(note => {
+            if (note.isDragging) {
+                note.x = mouseX - note.offsetX;
+                note.y = mouseY - note.offsetY;
+                drawCanvas();
+            } else if (note.isResizing) {
+                note.width = mouseX - note.x;
+                note.height = mouseY - note.y;
+                drawCanvas();
+            }
+        });
+    });
+
+    canvas.addEventListener("mouseup", () => {
+        stickyNotes.forEach(note => {
+            note.isDragging = false;
+            note.isResizing = false;
+        });
+    });
+
+    canvas.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        const mouseX = (event.offsetX - offsetX) / scale;
+        const mouseY = (event.offsetY - offsetY) / scale;
+
+        stickyNotes.forEach((note, index) => {
+            if (
+                mouseX >= note.x && mouseX <= note.x + note.width &&
+                mouseY >= note.y && mouseY <= note.y + note.height
+            ) {
+                stickyNotes.splice(index, 1);
+                drawCanvas();
+            }
+        });
+    });
+
+    // Create a custom context menu
+    const contextMenu = document.createElement("div");
+    contextMenu.id = "context-menu";
+    contextMenu.style.position = "absolute";
+    contextMenu.style.backgroundColor = "#fff";
+    contextMenu.style.border = "1px solid #ccc";
+    contextMenu.style.borderRadius = "5px";
+    contextMenu.style.boxShadow = "0 2px 5px rgba(0, 0, 0, 0.2)";
+    contextMenu.style.zIndex = "1000";
+    contextMenu.style.display = "none";
+    document.body.appendChild(contextMenu);
+
+    // Add "Create Sticky Note" option to the context menu
+    const createStickyNoteOption = document.createElement("div");
+    createStickyNoteOption.textContent = "Create Sticky Note";
+    createStickyNoteOption.style.padding = "10px";
+    createStickyNoteOption.style.cursor = "pointer";
+    createStickyNoteOption.addEventListener("click", () => {
+        const mouseX = parseFloat(contextMenu.dataset.mouseX);
+        const mouseY = parseFloat(contextMenu.dataset.mouseY);
+        createStickyNote(mouseX, mouseY);
+        contextMenu.style.display = "none";
+    });
+    contextMenu.appendChild(createStickyNoteOption);
+
+    // Show the custom context menu
+    canvas.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+
+        const mouseX = (event.offsetX - offsetX) / scale;
+        const mouseY = (event.offsetY - offsetY) / scale;
+
+        // Check if right-click is on a card or sticky note
+        const clickedOnCard = cards.some(card =>
+            mouseX >= card.x && mouseX <= card.x + card.width &&
+            mouseY >= card.y && mouseY <= card.y + card.height
+        );
+
+        const clickedOnNote = stickyNotes.some(note =>
+            mouseX >= note.x && mouseX <= note.x + note.width &&
+            mouseY >= note.y && mouseY <= note.y + note.height
+        );
+
+        if (!clickedOnCard && !clickedOnNote) {
+            contextMenu.style.left = `${event.pageX}px`;
+            contextMenu.style.top = `${event.pageY}px`;
+            contextMenu.style.display = "block";
+            contextMenu.dataset.mouseX = mouseX;
+            contextMenu.dataset.mouseY = mouseY;
+        } else {
+            contextMenu.style.display = "none";
+        }
+    });
+
+    // Hide the context menu when clicking elsewhere
+    document.addEventListener("click", () => {
+        contextMenu.style.display = "none";
+    });
+
     // Update event listeners for dragging and deleting cards
     canvas.addEventListener("mousedown", (event) => {
         if (event.button === 1) { // Middle mouse button
@@ -193,6 +433,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Clear the board
     clearBoardButton.addEventListener("click", () => {
         cards.length = 0; // Clear the cards array
+        stickyNotes.length = 0; // Clear the sticky notes array
         saveBoardState(cards); // Save the empty state
         drawCanvas(); // Redraw the canvas
     });
