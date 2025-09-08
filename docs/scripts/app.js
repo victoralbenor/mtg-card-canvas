@@ -15,7 +15,17 @@ document.addEventListener("DOMContentLoaded", () => {
     let isPanning = false;
     let startX, startY;
     const cards = [];
-    const stickyNotes = [];
+    let stickyNotes = [];
+
+    // Sticky Notes Persistence
+    const STICKY_NOTES_KEY = 'stickyNotes';
+    function saveStickyNotes() {
+        localStorage.setItem(STICKY_NOTES_KEY, JSON.stringify(stickyNotes));
+    }
+    function loadStickyNotesFromStorage() {
+        const notes = JSON.parse(localStorage.getItem(STICKY_NOTES_KEY) || '[]');
+        stickyNotes = notes;
+    }
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -51,6 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
             selected: false
         };
         stickyNotes.push(note);
+        saveStickyNotes();
         drawCanvas();
     }
 
@@ -139,11 +150,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         stickyNoteEditor.oninput = () => {
             note.text = stickyNoteEditor.value;
+            saveStickyNotes();
             drawCanvas();
         };
 
         stickyNoteEditor.onblur = () => {
             stickyNoteEditor.style.display = "none";
+            saveStickyNotes();
         };
     }
 
@@ -332,10 +345,13 @@ document.addEventListener("DOMContentLoaded", () => {
     canvas.addEventListener("mouseup", () => {
         isDraggingNote = false;
         draggedNote = null;
+        let changed = false;
         stickyNotes.forEach(note => {
+            if (note.isDragging || note.isResizing) changed = true;
             note.isDragging = false;
             note.isResizing = false;
         });
+        if (changed) saveStickyNotes();
     });
 
     canvas.addEventListener("contextmenu", (event) => {
@@ -349,6 +365,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 mouseY >= note.y && mouseY <= note.y + note.height
             ) {
                 stickyNotes.splice(index, 1);
+                saveStickyNotes();
                 drawCanvas();
             }
         });
@@ -462,12 +479,13 @@ document.addEventListener("DOMContentLoaded", () => {
         cards.length = 0; // Clear the cards array
         stickyNotes.length = 0; // Clear the sticky notes array
         saveBoardState(cards); // Save the empty state
+        saveStickyNotes(); // Save cleared notes
         drawCanvas(); // Redraw the canvas
     });
 
-    // Load the board state when the page loads
+    // Load the board state and sticky notes when the page loads
     loadBoardState(drawCanvas, cards);
-
+    loadStickyNotesFromStorage();
     drawCanvas();
 
     // Bulk Import functionality
