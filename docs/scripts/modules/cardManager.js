@@ -14,7 +14,15 @@ async function fetchCardImage(cardName) {
         const response = await fetch(`https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(cardName)}`);
         if (!response.ok) throw new Error("Card not found");
         const data = await response.json();
-        return data.image_uris.normal; // Return the card image URL
+        // Handle double-sided cards
+        if (data.card_faces && Array.isArray(data.card_faces) && data.card_faces.length > 0) {
+            // Return both faces as an array of image URLs
+            return data.card_faces.map(face => face.image_uris.normal);
+        } else if (data.image_uris && data.image_uris.normal) {
+            return [data.image_uris.normal]; // Return single-faced card as array
+        } else {
+            throw new Error("Card image not found");
+        }
     } catch (error) {
         alert("Card not found. Please try again.");
         return null;
@@ -22,22 +30,28 @@ async function fetchCardImage(cardName) {
 }
 
 export async function addCardToCanvas(cardName, canvas, cards, drawCanvas, saveBoardState, x = null, y = null) {
-    const imageUrl = await fetchCardImage(cardName);
-    if (!imageUrl) return;
+    const imageUrls = await fetchCardImage(cardName);
+    if (!imageUrls || imageUrls.length === 0) return;
 
-    const img = new Image();
-    img.src = imageUrl;
-    img.onload = () => {
-        cards.push({
-            img,
-            x: x !== null ? x : canvas.width / 2 - 50,
-            y: y !== null ? y : canvas.height / 2 - 70,
-            width: 100,
-            height: 140,
-        });
-        drawCanvas();
-        saveBoardState(cards); // Save the state after adding a card
-    };
+    // Offset for stacking cards if both faces are imported
+    const CARD_OFFSET = 30; // px, adjust as needed for visibility
+    let offset = 0;
+    imageUrls.forEach((url, idx) => {
+        const img = new Image();
+        img.src = url;
+        img.onload = () => {
+            cards.push({
+                img,
+                x: x !== null ? x + offset : canvas.width / 2 - 50 + offset,
+                y: y !== null ? y + offset : canvas.height / 2 - 70 + offset,
+                width: 100,
+                height: 140,
+            });
+            drawCanvas();
+            saveBoardState(cards); // Save the state after adding a card
+        };
+        offset += CARD_OFFSET; // Increase offset for each card face
+    });
 }
 
 export function handleCardDragging(event, canvas, cards, ctx, scale, offsetX, offsetY, drawCanvas, saveBoardState) {
