@@ -1,3 +1,12 @@
+/**
+ * boardState.js
+ * Handles saving and loading the board state (cards on the canvas) to/from localStorage.
+ * Exports:
+ *   - saveBoardState(cards): Save the current board state.
+ *   - loadBoardState(drawCanvas, cards): Load the board state and update the canvas.
+ *
+ * To extend: Add new state fields to the save/load logic as needed.
+ */
 // Save the board state to localStorage
 export function saveBoardState(cards) {
     const state = cards.map((card) => ({

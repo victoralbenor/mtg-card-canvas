@@ -1,3 +1,13 @@
+/**
+ * app.js
+ * Main entry point for the MTG Card Canvas app.
+ * Imports all modules and wires up UI and canvas logic.
+ *
+ * To iterate or extend:
+ *   1. Add new modules in scripts/modules/.
+ *   2. Import them here and wire up as needed.
+ *   3. No need to change index.html.
+ */
 // Wait for the DOM to load
 import { drawGrid } from './modules/grid.js';
 import { addCardToCanvas, handleCardDragging, handleCardDeletion } from './modules/cardManager.js';

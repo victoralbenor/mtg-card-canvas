@@ -1,3 +1,17 @@
+## Fast Iteration & LLM Development
+
+This project is structured for easy and fast iteration, especially with LLMs (AI coding assistants):
+
+- **Modular Code**: All logic is split into focused modules in `docs/scripts/modules/`.
+- **Single Entry Point**: Only `app.js` is loaded in `index.html`. Import new modules there.
+- **How to Add Features**:
+   1. Create a new JS file in `docs/scripts/modules/` for your feature.
+   2. Import and use it in `docs/scripts/app.js`.
+   3. No need to change the HTML.
+- **Commented Code**: Each module and function is documented for clarity.
+- **LLM-Friendly**: You can ask an LLM to add, refactor, or extend features by working with individual modules or the entry point.
+
+This makes it easy to iterate, test, and extend the app with minimal friction.
 # MTG Card Canvas
 
 MTG Card Canvas is a web application that allows users to create, drag, and manage Magic: The Gathering card images on an infinite canvas. The app features zooming, panning, and a grid-based background similar to Miro, making it ideal for sandbox-style board state visualization.
