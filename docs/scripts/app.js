@@ -14,6 +14,51 @@ import { addCardToCanvas, handleCardDragging, handleCardDeletion } from './modul
 import { saveBoardState, loadBoardState } from './modules/boardState.js';
 
 document.addEventListener("DOMContentLoaded", () => {
+    // --- Export/Import Buttons ---
+    const exportButton = document.getElementById("export-board");
+    const importButton = document.getElementById("import-board");
+
+    // Export: Download the current board state as a file
+    exportButton.addEventListener("click", () => {
+        const boardState = localStorage.getItem("boardState") || "[]";
+        const blob = new Blob([boardState], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "mtg-board-save.json";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 0);
+    });
+
+    // Import: Load a board state from a file
+    importButton.addEventListener("click", () => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".json,application/json";
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const importedState = JSON.parse(event.target.result);
+                    // Clear current board
+                    cards.length = 0;
+                    localStorage.setItem("boardState", JSON.stringify(importedState));
+                    // Re-load board state
+                    loadBoardState(drawCanvas, cards);
+                } catch (err) {
+                    alert("Invalid save file.");
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    });
     const canvas = document.getElementById("canvas");
     const input = document.getElementById("card-input");
     const clearBoardButton = document.getElementById("clear-board");
