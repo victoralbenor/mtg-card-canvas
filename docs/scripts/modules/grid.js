@@ -1,3 +1,11 @@
+/**
+ * grid.js
+ * Handles drawing the grid background on the canvas.
+ * Exports:
+ *   - drawGrid(ctx, scale, offsetX, offsetY, canvas): Draws the grid.
+ *
+ * To extend: Add new grid styles or overlays as new exported functions.
+ */
 export function drawGrid(ctx, scale, offsetX, offsetY, canvas) {
     const baseGridSize = 50; // Base size of each grid square
     const majorGridSize = baseGridSize * 5; // Larger grid for "grid of grids"

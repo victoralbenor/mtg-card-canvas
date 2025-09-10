@@ -1,3 +1,13 @@
+/**
+ * cardManager.js
+ * Handles card fetching, adding, dragging, and deletion on the canvas.
+ * Exports:
+ *   - addCardToCanvas(cardName, canvas, cards, drawCanvas, saveBoardState, x, y): Add a card by name.
+ *   - handleCardDragging(...): Handle card drag events.
+ *   - handleCardDeletion(...): Handle card deletion events.
+ *
+ * To extend: Add new card interaction logic as new exported functions.
+ */
 // Fetch card data from the Scryfall API
 async function fetchCardImage(cardName) {
     try {

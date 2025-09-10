@@ -1,3 +1,13 @@
+/**
+ * app.js
+ * Main entry point for the MTG Card Canvas app.
+ * Imports all modules and wires up UI and canvas logic.
+ *
+ * To iterate or extend:
+ *   1. Add new modules in scripts/modules/.
+ *   2. Import them here and wire up as needed.
+ *   3. No need to change index.html.
+ */
 // Wait for the DOM to load
 import { drawGrid } from './modules/grid.js';
 import { addCardToCanvas, handleCardDragging, handleCardDeletion } from './modules/cardManager.js';
@@ -187,7 +197,10 @@ document.addEventListener("DOMContentLoaded", () => {
             suggestionItem.style.padding = "10px";
             suggestionItem.style.cursor = "pointer";
             suggestionItem.addEventListener("click", () => {
-                addCardToCanvas(suggestion, canvas, cards, drawCanvas, saveBoardState); // Create the card directly
+                // Place at mouse position if available
+                let x = lastMouseCanvasX !== null ? lastMouseCanvasX : null;
+                let y = lastMouseCanvasY !== null ? lastMouseCanvasY : null;
+                addCardToCanvas(suggestion, canvas, cards, drawCanvas, saveBoardState, x, y); // Create the card directly
                 inputElement.value = ""; // Clear the input field
                 suggestionBox.style.display = "none"; // Hide the suggestion box
             });
@@ -219,12 +232,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // Track last mouse position in canvas coordinates
+    let lastMouseCanvasX = null;
+    let lastMouseCanvasY = null;
+    canvas.addEventListener("mousemove", (event) => {
+        lastMouseCanvasX = (event.offsetX - offsetX) / scale;
+        lastMouseCanvasY = (event.offsetY - offsetY) / scale;
+    });
+
     // Handle card input submission
     input.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
             const cardName = input.value.trim();
             if (cardName) {
-                addCardToCanvas(cardName, canvas, cards, drawCanvas, saveBoardState);
+                // Place at mouse position if available
+                let x = lastMouseCanvasX !== null ? lastMouseCanvasX : null;
+                let y = lastMouseCanvasY !== null ? lastMouseCanvasY : null;
+                addCardToCanvas(cardName, canvas, cards, drawCanvas, saveBoardState, x, y);
                 input.value = ""; // Clear the input
             }
         }
@@ -234,7 +258,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("add-card").addEventListener("click", () => {
         const cardName = input.value.trim();
         if (cardName) {
-            addCardToCanvas(cardName, canvas, cards, drawCanvas, saveBoardState);
+            // Place at mouse position if available
+            let x = lastMouseCanvasX !== null ? lastMouseCanvasX : null;
+            let y = lastMouseCanvasY !== null ? lastMouseCanvasY : null;
+            addCardToCanvas(cardName, canvas, cards, drawCanvas, saveBoardState, x, y);
             input.value = ""; // Clear the input
         }
     });

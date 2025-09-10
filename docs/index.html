@@ -26,6 +26,13 @@
 
         <canvas id="canvas"></canvas>
     </div>
-    <script type="module" src="./scripts/app.js"></script>
+        <!-- Main entry point: all modules are imported via app.js for easier iteration and modularity -->
+        <script type="module" src="./scripts/app.js"></script>
+        <!--
+            To add new features or modules:
+            1. Create a new JS file in scripts/modules/.
+            2. Import and use it in app.js.
+            3. No need to modify this HTML file.
+        -->
 </body>
 </html>
