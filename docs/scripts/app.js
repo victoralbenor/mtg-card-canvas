@@ -18,10 +18,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const exportButton = document.getElementById("export-board");
     const importButton = document.getElementById("import-board");
 
-    // Export: Download the current board state as a file
+    // Export: Download the current board state and sticky notes as a file
     exportButton.addEventListener("click", () => {
         const boardState = localStorage.getItem("boardState") || "[]";
-        const blob = new Blob([boardState], { type: "application/json" });
+        const stickyNotesState = localStorage.getItem("stickyNotes") || "[]";
+        const exportData = {
+            boardState: JSON.parse(boardState),
+            stickyNotes: JSON.parse(stickyNotesState)
+        };
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -34,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 0);
     });
 
-    // Import: Load a board state from a file
+    // Import: Load a board state and sticky notes from a file
     importButton.addEventListener("click", () => {
         const input = document.createElement("input");
         input.type = "file";
@@ -45,12 +50,21 @@ document.addEventListener("DOMContentLoaded", () => {
             const reader = new FileReader();
             reader.onload = (event) => {
                 try {
-                    const importedState = JSON.parse(event.target.result);
-                    // Clear current board
+                    const imported = JSON.parse(event.target.result);
+                    // Clear current board and sticky notes
                     cards.length = 0;
-                    localStorage.setItem("boardState", JSON.stringify(importedState));
-                    // Re-load board state
-                    loadBoardState(drawCanvas, cards);
+                    stickyNotes.length = 0;
+                    // Import board state
+                    if (imported.boardState) {
+                        localStorage.setItem("boardState", JSON.stringify(imported.boardState));
+                        loadBoardState(drawCanvas, cards);
+                    }
+                    // Import sticky notes
+                    if (imported.stickyNotes) {
+                        localStorage.setItem("stickyNotes", JSON.stringify(imported.stickyNotes));
+                        stickyNotes.push(...imported.stickyNotes);
+                        drawCanvas();
+                    }
                 } catch (err) {
                     alert("Invalid save file.");
                 }
